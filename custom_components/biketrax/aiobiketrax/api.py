@@ -1,7 +1,8 @@
+"""API file for biketrax component."""
 import logging
 from datetime import datetime
 from decimal import InvalidOperation
-from typing import Any, AsyncIterable, Optional, Union
+from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
 import aiohttp
 import jwt
@@ -20,15 +21,13 @@ AsyncDatabase = asyncify(Database)
 
 
 class IdentityApi:
-    """
-    Identity client.
-    """
+    """Identity client."""
 
     username: str
     password: str
 
     database: AsyncDatabase
-    id_token: Optional[dict[str, Any]]
+    id_token: Optional[Dict[str, Any]]
 
     def __init__(self, username: str, password: str) -> None:
         """Construct a new instance.
@@ -44,6 +43,7 @@ class IdentityApi:
         self.id_token = None
 
     async def login(self):
+        """Login to the identity API."""
         if self.id_token is None:
             response = await self.database.login_async(
                 client_id=API_CLIENT_ID,
@@ -58,13 +58,12 @@ class IdentityApi:
             )
 
     def logout(self):
+        """Logout from the identity API."""
         self.id_token = None
 
     @property
     def traccar_password(self) -> str:
-        """
-        Return the password necessary for the Traccar API.
-        """
+        """Return the password necessary for the Traccar API."""
 
         if self.id_token is None:
             raise InvalidOperation("Not signed in.")
@@ -73,9 +72,7 @@ class IdentityApi:
 
 
 class TraccarApi:
-    """
-    API client for the Traccar endpoint.
-    """
+    """API client for the Traccar endpoint."""
 
     def __init__(
         self, identity_api: IdentityApi, session: aiohttp.ClientSession
@@ -89,8 +86,8 @@ class TraccarApi:
         self.identity_api = identity_api
         self.session = session
 
-    async def get_devices(self) -> list[models.Device]:
-        """_summary_
+    async def get_devices(self) -> List[models.Device]:
+        """Get all devices.
 
         Returns:
             A list of devices.
@@ -112,9 +109,7 @@ class TraccarApi:
 
         return models.device_from_dict(response)
 
-    async def put_device(
-        self, id: int, device: models.Device
-    ) -> models.Device:
+    async def put_device(self, id: int, device: models.Device) -> models.Device:
         """Update a device.
 
         Args:
@@ -153,7 +148,7 @@ class TraccarApi:
 
     async def get_positions(
         self, device_id: str, from_date: datetime, to_date: datetime
-    ) -> list[models.Position]:
+    ) -> List[models.Position]:
         """Get positions using a filter.
 
         Args:
@@ -176,9 +171,7 @@ class TraccarApi:
 
         return [models.position_from_dict(position) for position in response]
 
-    async def get_position(
-        self, device_id: str, id: str
-    ) -> Optional[models.Position]:
+    async def get_position(self, device_id: str, id: str) -> Optional[models.Position]:
         """Get a position by its identifier.
 
         Args:
@@ -198,7 +191,7 @@ class TraccarApi:
 
     async def get_trips(
         self, device_id: str, from_date: datetime, to_date: datetime
-    ) -> list[models.Trip]:
+    ) -> List[models.Trip]:
         """Get trips using a filter.
 
         Args:
@@ -220,7 +213,7 @@ class TraccarApi:
 
         return [models.trip_from_dict(trip) for trip in response]
 
-    async def _get(self, endpoint, params=None) -> dict:
+    async def _get(self, endpoint, params=None) -> Dict:
         while True:
             await self.identity_api.login()
 
@@ -246,7 +239,7 @@ class TraccarApi:
 
             return json
 
-    async def _post(self, endpoint, data=None, json=None) -> dict:
+    async def _post(self, endpoint, data=None, json=None) -> Dict:
         while True:
             await self.identity_api.login()
 
@@ -273,7 +266,7 @@ class TraccarApi:
 
             return json
 
-    async def _put(self, endpoint, data=None, json=None) -> dict:
+    async def _put(self, endpoint, data=None, json=None) -> Dict:
         while True:
             await self.identity_api.login()
 
@@ -348,9 +341,7 @@ class TraccarApi:
 
 
 class AdminApi:
-    """
-    API client for the admin endpoint.
-    """
+    """API client for the admin endpoint."""
 
     def __init__(
         self, identity_api: IdentityApi, session: aiohttp.ClientSession
@@ -383,9 +374,7 @@ class AdminApi:
         """
         await self._post_no_response(f"devices/{unique_id}/disarm", json={})
 
-    async def get_subscription(
-        self, unique_id: str
-    ) -> Optional[models.Subscription]:
+    async def get_subscription(self, unique_id: str) -> Optional[models.Subscription]:
         """Get the subscription.
 
         Args:
@@ -399,7 +388,7 @@ class AdminApi:
 
         return models.subscription_from_dict(response)
 
-    async def _get(self, endpoint, params=None) -> dict:
+    async def _get(self, endpoint, params=None) -> Dict:
         while True:
             await self.identity_api.login()
 
@@ -425,7 +414,7 @@ class AdminApi:
 
             return json
 
-    async def _post(self, endpoint, data=None, json=None) -> dict:
+    async def _post(self, endpoint, data=None, json=None) -> Dict:
         while True:
             await self.identity_api.login()
 

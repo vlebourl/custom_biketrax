@@ -1,7 +1,8 @@
+"""BikeTrax client."""
 import asyncio
 import logging
 from datetime import datetime
-from typing import Callable, Optional, final
+from typing import Callable, Dict, List, Optional, final
 
 import aiohttp
 
@@ -12,14 +13,11 @@ _LOGGER = logging.getLogger(__name__)
 
 @final
 class Account:
-    """
-    An `Account` instance is responsible for accessing devices and providing
-    updates.
-    """
+    """An `Account` instance is responsible for accessing devices and providing updates."""
 
-    _devices: dict[int, models.Device]
-    _positions: dict[int, models.Position]
-    _subscriptions: dict[str, models.Subscription]
+    _devices: Dict[int, models.Device]
+    _positions: Dict[int, models.Position]
+    _subscriptions: Dict[str, models.Subscription]
 
     def __init__(
         self, username: str, password: str, session: aiohttp.ClientSession
@@ -43,9 +41,9 @@ class Account:
         self._update_task = None
 
     async def update_devices(self) -> None:
+        """Update the list of devices."""
         self._devices = {
-            device.id: device
-            for device in await self.traccar_api.get_devices()
+            device.id: device for device in await self.traccar_api.get_devices()
         }
 
     def start(self, on_update: Callable[[], None] = None) -> None:
@@ -58,9 +56,7 @@ class Account:
         _LOGGER.debug("Starting the websocket task.")
 
         if self._update_task is None:
-            self._update_task = asyncio.create_task(
-                self.update_task(on_update)
-            )
+            self._update_task = asyncio.create_task(self.update_task(on_update))
 
     async def stop(self) -> None:
         """Stop the update task."""
@@ -115,7 +111,7 @@ class Account:
                     asyncio.sleep((8 if errors > 8 else errors) ** 2)
 
     @property
-    def devices(self) -> list["Device"]:
+    def devices(self) -> List["Device"]:
         """
         Return the devices.
 
@@ -128,8 +124,9 @@ class Account:
 @final
 class Device:
     """
-    A `Device` instance is a view of `models.Device` and `models.Position`. It
-    retrieves the data from an `Account` instance using a device identifier.
+    A `Device` instance is a view of `models.Device` and `models.Position`.
+
+    It retrieves the data from an `Account` instance using a device identifier.
     """
 
     # Account instance.
@@ -149,9 +146,7 @@ class Device:
         self._id = id
 
     async def update_position(self) -> None:
-        """
-        Update the position information of the device.
-        """
+        """Update the position information of the device."""
         self._account._positions[
             self._id
         ] = await self._account.traccar_api.get_position(
@@ -159,22 +154,17 @@ class Device:
         )
 
     async def update_subscription(self) -> None:
-        """
-        Update the subscription information of the device.
-        """
+        """Update the subscription information of the device."""
         self._account._subscriptions[
             self._id
-        ] = await self._account.admin_api.get_subscription(
-            self._device.unique_id
-        )
+        ] = await self._account.admin_api.get_subscription(self._device.unique_id)
 
     async def update_trips(self) -> None:
-        """
-        Update the trips information of the device.
-        """
+        """Update the trips information of the device."""
         pass
 
     async def set_guarded(self, guarded: bool) -> None:
+        """Set the guarded attribute of the device."""
         if guarded:
             await self._account.admin_api.post_arm(self._device.unique_id)
         else:
@@ -184,79 +174,83 @@ class Device:
         self._device.attributes.guarded = True
 
     async def set_stolen(self, stolen: bool) -> None:
+        """Set the stolen attribute of the device."""
         device = models.Device.from_dict(self._device.to_dict())
 
         device.attributes.stolen = stolen
 
-        self._account._devices[
-            self._id
-        ] = await self._account.traccar_api.put_device(self._id, device)
+        self._account._devices[self._id] = await self._account.traccar_api.put_device(
+            self._id, device
+        )
 
     async def set_tracking_enabled(self, tracking_enabled: bool) -> None:
+        """Set the tracking enabled attribute of the device."""
         device = models.Device.from_dict(self._device.to_dict())
 
         device.disabled = not tracking_enabled
 
-        self._account._devices[
-            self._id
-        ] = await self._account.traccar_api.put_device(self._id, device)
+        self._account._devices[self._id] = await self._account.traccar_api.put_device(
+            self._id, device
+        )
 
     @property
     def _device(self) -> models.Device:
-        """
-        Get the device data.
-        """
+        """Get the device data."""
         return self._account._devices.get(self._id)
 
     @property
     def _position(self) -> Optional[models.Position]:
-        """
-        Get the position. Can be `None` if no position data is available yet.
-        """
+        """Get the position. Can be `None` if no position data is available yet."""
         return self._account._positions.get(self._id)
 
     @property
     def _subscription(self) -> Optional[models.Subscription]:
-        """
-        Get the subscription. Can be `None` if no subscription data is
-        available (yet).
-        """
+        """Get the subscription. Can be `None` if no subscription data is available (yet)."""
         return self._account._subscriptions.get(self._id)
 
     @property
     def id(self) -> int:
+        """Get the device identifier."""
         return self._id
 
     @property
     def name(self) -> str:
+        """Get the device name."""
         return self._device.name
 
     @property
     def is_deleted(self) -> bool:
+        """Get whether the device is deleted."""
         return self._id in self._device
 
     @property
     def is_alarm_triggered(self) -> bool:
+        """Get whether the device is alarmed."""
         return self._device.attributes.alarm
 
     @property
     def is_tracking_enabled(self) -> bool:
+        """Get whether the device is tracking."""
         return not self._device.disabled
 
     @property
     def is_stolen(self) -> bool:
+        """Get whether the device is stolen."""
         return self._device.attributes.stolen
 
     @property
     def is_guarded(self) -> bool:
+        """Get whether the device is guarded."""
         return self._device.attributes.guarded
 
     @property
     def is_auto_guarded(self) -> bool:
+        """Get whether the device is auto-guarded."""
         return self._device.attributes.auto_guard
 
     @property
     def latitude(self) -> Optional[float]:
+        """Get the latitude."""
         if not self._position:
             return None
 
@@ -264,6 +258,7 @@ class Device:
 
     @property
     def longitude(self) -> Optional[float]:
+        """Get the longitude."""
         if not self._position:
             return None
 
@@ -271,6 +266,7 @@ class Device:
 
     @property
     def altitude(self) -> Optional[float]:
+        """Get the altitude."""
         if not self._position:
             return None
 
@@ -278,6 +274,7 @@ class Device:
 
     @property
     def accuracy(self) -> Optional[int]:
+        """Get the accuracy."""
         if not self._position:
             return None
 
@@ -285,6 +282,7 @@ class Device:
 
     @property
     def speed(self) -> Optional[int]:
+        """Get the speed."""
         if not self._position:
             return None
 
@@ -292,6 +290,7 @@ class Device:
 
     @property
     def course(self) -> Optional[float]:
+        """Get the course."""
         if not self._position:
             return None
 
@@ -299,6 +298,7 @@ class Device:
 
     @property
     def battery_level(self) -> Optional[float]:
+        """Get the battery level."""
         if not self._position:
             return None
 
@@ -306,6 +306,7 @@ class Device:
 
     @property
     def total_distance(self) -> Optional[float]:
+        """Get the total distance."""
         if not self._position:
             return None
 
@@ -313,6 +314,7 @@ class Device:
 
     @property
     def subscription_until(self) -> Optional[datetime]:
+        """Get the subscription until."""
         if not self._subscription:
             return None
 
@@ -322,8 +324,10 @@ class Device:
 
     @property
     def last_updated(self) -> datetime:
+        """Get the last updated timestamp."""
         return self._device.last_update
 
     @property
     def status(self) -> str:
+        """Get the status."""
         return self._device.status

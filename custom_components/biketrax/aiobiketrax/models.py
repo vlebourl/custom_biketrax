@@ -1,3 +1,4 @@
+"""Models for the Biketrax API."""
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, List, Optional, Type, TypeVar, cast
@@ -8,35 +9,42 @@ T = TypeVar("T")
 
 
 def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
+    """Retrieve from a list."""
     assert isinstance(x, list)
     return [f(y) for y in x]
 
 
 def from_str(x: Any) -> str:
+    """Retrieve from a str."""
     assert isinstance(x, str)
     return x
 
 
 def from_bool(x: Any) -> bool:
+    """Retrieve from a bool."""
     assert isinstance(x, bool)
     return x
 
 
 def from_int(x: Any) -> int:
+    """Retrieve from a int."""
     assert isinstance(x, int) and not isinstance(x, bool)
     return x
 
 
 def from_datetime(x: Any) -> datetime:
+    """Retrieve from a datetime."""
     return dateutil.parser.parse(x)
 
 
 def from_none(x: Any) -> Any:
+    """Retrieve from a None."""
     assert x is None
     return x
 
 
 def from_union(fs, x):
+    """Return the first type that matches."""
     for f in fs:
         try:
             return f(x)
@@ -46,22 +54,27 @@ def from_union(fs, x):
 
 
 def to_class(c: Type[T], x: Any) -> dict:
+    """Convert a class instance to a dictionary."""
     assert isinstance(x, c)
     return cast(Any, x).to_dict()
 
 
 def from_float(x: Any) -> float:
+    """Retrieve from a float."""
     assert isinstance(x, (float, int)) and not isinstance(x, bool)
     return float(x)
 
 
 def to_float(x: Any) -> float:
+    """Convert a value to a float."""
     assert isinstance(x, float)
     return x
 
 
 @dataclass
 class Passport:
+    """Passport."""
+
     bike_pictures: List[str]
     bike_type: str
     colour: str
@@ -75,6 +88,7 @@ class Passport:
 
     @staticmethod
     def from_dict(obj: Any) -> "Passport":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         bike_pictures = from_list(from_str, obj.get("bikePictures"))
         bike_type = from_str(obj.get("bikeType", "Unknown"))
@@ -100,6 +114,7 @@ class Passport:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["bikePictures"] = from_list(from_str, self.bike_pictures)
         result["bikeType"] = from_str(self.bike_type)
@@ -116,6 +131,8 @@ class Passport:
 
 @dataclass
 class DeviceAttributes:
+    """Device attributes."""
+
     alarm: bool
     auto_guard: bool
     geofence_radius: int
@@ -128,6 +145,7 @@ class DeviceAttributes:
 
     @staticmethod
     def from_dict(obj: Any) -> "DeviceAttributes":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         alarm = from_bool(obj.get("alarm"))
         auto_guard = from_bool(obj.get("autoGuard"))
@@ -151,6 +169,7 @@ class DeviceAttributes:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["alarm"] = from_bool(self.alarm)
         result["autoGuard"] = from_bool(self.auto_guard)
@@ -166,6 +185,8 @@ class DeviceAttributes:
 
 @dataclass
 class Device:
+    """Device."""
+
     attributes: DeviceAttributes
     category: None
     contact: None
@@ -183,6 +204,7 @@ class Device:
 
     @staticmethod
     def from_dict(obj: Any) -> "Device":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         attributes = DeviceAttributes.from_dict(obj.get("attributes"))
         category = from_str(obj.get("category", "Unknown"))
@@ -216,6 +238,7 @@ class Device:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["attributes"] = to_class(DeviceAttributes, self.attributes)
         result["category"] = from_none(self.category)
@@ -236,6 +259,8 @@ class Device:
 
 @dataclass
 class PositionAttributes:
+    """Position attributes."""
+
     battery_level: int
     charge: bool
     distance: float
@@ -250,6 +275,7 @@ class PositionAttributes:
 
     @staticmethod
     def from_dict(obj: Any) -> "PositionAttributes":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         battery_level = from_int(obj.get("batteryLevel"))
         charge = from_bool(obj.get("charge"))
@@ -277,6 +303,7 @@ class PositionAttributes:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["batteryLevel"] = from_int(self.battery_level)
         result["charge"] = from_bool(self.charge)
@@ -294,6 +321,8 @@ class PositionAttributes:
 
 @dataclass
 class Position:
+    """Position."""
+
     accuracy: float
     address: None
     altitude: float
@@ -315,6 +344,7 @@ class Position:
 
     @staticmethod
     def from_dict(obj: Any) -> "Position":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         accuracy = from_float(obj.get("accuracy"))
         address = from_none(obj.get("address"))
@@ -356,6 +386,7 @@ class Position:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["accuracy"] = to_float(self.accuracy)
         result["address"] = from_none(self.address)
@@ -380,6 +411,8 @@ class Position:
 
 @dataclass
 class SessionAttributes:
+    """Session attributes."""
+
     app_environment: str
     app_package: str
     app_version: str
@@ -389,6 +422,7 @@ class SessionAttributes:
 
     @staticmethod
     def from_dict(obj: Any) -> "SessionAttributes":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         app_environment = from_str(obj.get("appEnvironment"))
         app_package = from_str(obj.get("appPackage"))
@@ -406,6 +440,7 @@ class SessionAttributes:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["appEnvironment"] = from_str(self.app_environment)
         result["appPackage"] = from_str(self.app_package)
@@ -418,6 +453,8 @@ class SessionAttributes:
 
 @dataclass
 class Session:
+    """Session."""
+
     administrator: bool
     attributes: SessionAttributes
     coordinate_format: None
@@ -444,6 +481,7 @@ class Session:
 
     @staticmethod
     def from_dict(obj: Any) -> "Session":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         administrator = from_bool(obj.get("administrator"))
         attributes = SessionAttributes.from_dict(obj.get("attributes"))
@@ -495,6 +533,7 @@ class Session:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["administrator"] = from_bool(self.administrator)
         result["attributes"] = to_class(SessionAttributes, self.attributes)
@@ -524,6 +563,8 @@ class Session:
 
 @dataclass
 class Subscription:
+    """Subscription."""
+
     category: str
     created_at: datetime
     id: int
@@ -536,6 +577,7 @@ class Subscription:
 
     @staticmethod
     def from_dict(obj: Any) -> "Subscription":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         category = from_str(obj.get("category"))
         created_at = from_datetime(obj.get("createdAt"))
@@ -559,6 +601,7 @@ class Subscription:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["category"] = from_str(self.category)
         result["createdAt"] = self.created_at.isoformat()
@@ -574,6 +617,8 @@ class Subscription:
 
 @dataclass
 class Trip:
+    """Trip."""
+
     average_speed: float
     device_id: int
     device_name: str
@@ -598,6 +643,7 @@ class Trip:
 
     @staticmethod
     def from_dict(obj: Any) -> "Trip":
+        """Build a class instance from a dictionary."""
         assert isinstance(obj, dict)
         average_speed = from_float(obj.get("averageSpeed"))
         device_id = from_int(obj.get("deviceId"))
@@ -645,6 +691,7 @@ class Trip:
         )
 
     def to_dict(self) -> dict:
+        """Convert a class instance to a dictionary."""
         result: dict = {}
         result["averageSpeed"] = to_float(self.average_speed)
         result["deviceId"] = from_int(self.device_id)
@@ -671,72 +718,90 @@ class Trip:
 
 
 def device_from_dict(s: Any) -> Device:
+    """Build a class instance from a dictionary."""
     return Device.from_dict(s)
 
 
 def device_to_dict(x: Device) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(Device, x)
 
 
 def device_attributes_from_dict(s: Any) -> DeviceAttributes:
+    """Build a class instance from a dictionary."""
     return DeviceAttributes.from_dict(s)
 
 
 def device_attributes_to_dict(x: DeviceAttributes) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(DeviceAttributes, x)
 
 
 def passport_from_dict(s: Any) -> Passport:
+    """Build a class instance from a dictionary."""
     return Passport.from_dict(s)
 
 
 def passport_to_dict(x: Passport) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(Passport, x)
 
 
 def position_from_dict(s: Any) -> Position:
+    """Build a class instance from a dictionary."""
     return Position.from_dict(s)
 
 
 def position_to_dict(x: Position) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(Position, x)
 
 
 def position_attributes_from_dict(s: Any) -> PositionAttributes:
+    """Build a class instance from a dictionary."""
     return PositionAttributes.from_dict(s)
 
 
 def position_attributes_to_dict(x: PositionAttributes) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(PositionAttributes, x)
 
 
 def session_from_dict(s: Any) -> Session:
+    """Build a class instance from a dictionary."""
     return Session.from_dict(s)
 
 
 def session_to_dict(x: Session) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(Session, x)
 
 
 def session_attributes_from_dict(s: Any) -> SessionAttributes:
+    """Build a class instance from a dictionary."""
     return SessionAttributes.from_dict(s)
 
 
 def session_attributes_to_dict(x: SessionAttributes) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(SessionAttributes, x)
 
 
 def subscription_from_dict(s: Any) -> Subscription:
+    """Build a class instance from a dictionary."""
     return Subscription.from_dict(s)
 
 
 def subscription_to_dict(x: Subscription) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(Subscription, x)
 
 
 def trip_from_dict(s: Any) -> Trip:
+    """Build a class instance from a dictionary."""
     return Trip.from_dict(s)
 
 
 def trip_to_dict(x: Trip) -> Any:
+    """Convert a class instance to a dictionary."""
     return to_class(Trip, x)
