@@ -5,5 +5,6 @@
   "config_flow": true,
   "iot_class": "cloud_polling",
   "version": "0.1.0",
+  "loggers": ["biketrax"],
   "issue_tracker": "https://github.com/vlebourl/custom_biketrax/issues",
 }
