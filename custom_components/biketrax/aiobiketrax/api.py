@@ -97,30 +97,30 @@ class TraccarApi:
 
         return [models.device_from_dict(device) for device in response]
 
-    async def get_device(self, id: int) -> models.Device:
+    async def get_device(self, bike_id: int) -> models.Device:
         """Get a device by its identifier.
 
         Args:
-            id: The device identifier.
+            bike_id: The device identifier.
 
         Returns:
             A device.
         """
-        response = await self._get(f"devices/{id}")
+        response = await self._get(f"devices/{bike_id}")
 
         return models.device_from_dict(response)
 
-    async def put_device(self, id: int, device: models.Device) -> models.Device:
+    async def put_device(self, bike_id: int, device: models.Device) -> models.Device:
         """Update a device.
 
         Args:
-            id: The device identifier.
+            bike_id: The device identifier.
             device: The updated device.
 
         Returns:
             The updated device.
         """
-        response = await self._put(f"devices/{id}", json=device.to_dict())
+        response = await self._put(f"devices/{bike_id}", json=device.to_dict())
 
         return models.device_from_dict(response)
 
@@ -172,19 +172,21 @@ class TraccarApi:
 
         return [models.position_from_dict(position) for position in response]
 
-    async def get_position(self, device_id: str, id: str) -> Optional[models.Position]:
+    async def get_position(
+        self, device_id: str, bike_id: str
+    ) -> Optional[models.Position]:
         """Get a position by its identifier.
 
         Args:
             device_id: The device identifier.
-            id: The position identifier.
+            bike_id: The position identifier.
 
         Returns:
             The position.
         """
 
         response = await self._get(
-            "positions", params={"device_id": device_id, "id": id}
+            "positions", params={"device_id": device_id, "id": bike_id}
         )
 
         # The result is a list, but an object is more appropriate.

@@ -10,6 +10,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.async_ import gather_with_concurrency
 
@@ -43,7 +44,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             session=websession,
         )
         await client.update_devices()
-        bikes = {bike.id: bike for bike in client.devices}
+        bikes = {bike.bike_id: bike for bike in client.devices}
     except Exception as err:
         raise ConfigEntryAuthFailed("Failed to authenticate") from err
 
@@ -82,6 +83,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS[0])
+
+    device_registry = await dr.async_get_registry(hass)
+    for bike_id, bike in bikes.items():
+        LOGGER.debug("Add bike (%s)", bike_id)
+
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, bike_id)},
+            model=bike.model,
+            manufacturer="PowUnity BikeTrax",
+            name=bike.name,
+        )
 
     return True
 

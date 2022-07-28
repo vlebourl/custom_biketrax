@@ -8,6 +8,7 @@ from homeassistant.components.device_tracker.const import SOURCE_TYPE_GPS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_USERNAME
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -33,6 +34,7 @@ ATTR_TOTAL_DISTANCE = "total_distance"
 ATTR_SUBSCRIPTION_UNTIL = "subscription_until"
 ATTR_LAST_UPDATED = "last_updated"
 ATTR_STATUS = "status"
+ATTR_TRIP = "trip"
 
 DEFAULT_ICON = "mdi:bike"
 
@@ -66,9 +68,19 @@ class BikeTraxDeviceTracker(CoordinatorEntity, TrackerEntity):
 
         self._attr_extra_state_attributes = {}
         self._attr_name = biketrax.name
-        self._attr_unique_id = f"{entry.data[CONF_USERNAME]}_{biketrax.id}"
+        self._attr_unique_id = f"{entry.data[CONF_USERNAME]}_{biketrax.bike_id}"
         self._entry = entry
         self._biketrax = biketrax
+        self._attr_device_info = self.generate_device_info()
+
+    def generate_device_info(self) -> DeviceInfo:
+        """Return device registry information for this entity."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._biketrax.bike_id)},
+            name=self._biketrax.name,
+            manufacturer="PowUnity BikeTrax",
+            model=self._biketrax.model,
+        )
 
     @property
     def location_accuracy(self) -> int:
@@ -117,6 +129,7 @@ class BikeTraxDeviceTracker(CoordinatorEntity, TrackerEntity):
                 ATTR_SUBSCRIPTION_UNTIL: self._biketrax.subscription_until,
                 ATTR_LAST_UPDATED: self._biketrax.last_updated,
                 ATTR_STATUS: self._biketrax.status,
+                ATTR_TRIP: self._biketrax.trip,
             }
         )
 

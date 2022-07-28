@@ -1,4 +1,6 @@
 """Models for the Biketrax API."""
+
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, List, Optional, Type, TypeVar, cast
@@ -46,10 +48,8 @@ def from_none(x: Any) -> Any:
 def from_union(fs, x):
     """Return the first type that matches."""
     for f in fs:
-        try:
+        with contextlib.suppress(Exception):
             return f(x)
-        except Exception:
-            pass
     assert False
 
 
@@ -115,8 +115,7 @@ class Passport:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["bikePictures"] = from_list(from_str, self.bike_pictures)
+        result: dict = {"bikePictures": from_list(from_str, self.bike_pictures)}
         result["bikeType"] = from_str(self.bike_type)
         result["colour"] = from_str(self.colour)
         result["engine"] = from_str(self.engine)
@@ -170,8 +169,7 @@ class DeviceAttributes:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["alarm"] = from_bool(self.alarm)
+        result: dict = {"alarm": from_bool(self.alarm)}
         result["autoGuard"] = from_bool(self.auto_guard)
         result["geofenceRadius"] = from_int(self.geofence_radius)
         result["guarded"] = from_bool(self.guarded)
@@ -193,7 +191,7 @@ class Device:
     disabled: bool
     geofence_ids: List[Any]
     group_id: int
-    id: int
+    bike_id: int
     last_update: datetime
     model: None
     name: str
@@ -212,7 +210,7 @@ class Device:
         disabled = from_bool(obj.get("disabled", False))
         geofence_ids = from_list(lambda x: x, obj.get("geofenceIds"))
         group_id = from_int(obj.get("groupId"))
-        id = from_int(obj.get("id"))
+        bike_id = from_int(obj.get("id"))
         last_update = from_datetime(obj.get("lastUpdate"))
         model = from_str(obj.get("model", "Unknown"))
         name = from_str(obj.get("name", "Unknown"))
@@ -227,7 +225,7 @@ class Device:
             disabled,
             geofence_ids,
             group_id,
-            id,
+            bike_id,
             last_update,
             model,
             name,
@@ -239,18 +237,17 @@ class Device:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["attributes"] = to_class(DeviceAttributes, self.attributes)
-        result["category"] = from_none(self.category)
-        result["contact"] = from_none(self.contact)
+        result: dict = {"attributes": to_class(DeviceAttributes, self.attributes)}
+        result["category"] = from_str(self.category)
+        result["contact"] = from_str(self.contact)
         result["disabled"] = from_bool(self.disabled)
         result["geofenceIds"] = from_list(lambda x: x, self.geofence_ids)
         result["groupId"] = from_int(self.group_id)
-        result["id"] = from_int(self.id)
+        result["bike_id"] = from_int(self.bike_id)
         result["lastUpdate"] = self.last_update.isoformat()
-        result["model"] = from_none(self.model)
+        result["model"] = from_str(self.model)
         result["name"] = from_str(self.name)
-        result["phone"] = from_none(self.phone)
+        result["phone"] = from_str(self.phone)
         result["positionId"] = from_int(self.position_id)
         result["status"] = from_str(self.status)
         result["uniqueId"] = from_str(self.unique_id)
@@ -304,8 +301,7 @@ class PositionAttributes:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["batteryLevel"] = from_int(self.battery_level)
+        result: dict = {"batteryLevel": from_int(self.battery_level)}
         result["charge"] = from_bool(self.charge)
         result["distance"] = to_float(self.distance)
         result["hours"] = from_int(self.hours)
@@ -331,7 +327,7 @@ class Position:
     device_id: int
     device_time: datetime
     fix_time: datetime
-    id: int
+    bike_id: int
     latitude: float
     longitude: float
     network: None
@@ -354,7 +350,7 @@ class Position:
         device_id = from_int(obj.get("deviceId"))
         device_time = from_datetime(obj.get("deviceTime"))
         fix_time = from_datetime(obj.get("fixTime"))
-        id = from_int(obj.get("id"))
+        bike_id = from_int(obj.get("id"))
         latitude = from_float(obj.get("latitude"))
         longitude = from_float(obj.get("longitude"))
         network = from_none(obj.get("network"))
@@ -362,7 +358,7 @@ class Position:
         protocol = from_str(obj.get("protocol"))
         server_time = from_datetime(obj.get("serverTime"))
         speed = from_float(obj.get("speed"))
-        type = from_none(obj.get("type"))
+        bike_type = from_none(obj.get("type"))
         valid = from_bool(obj.get("valid"))
         return Position(
             accuracy,
@@ -373,7 +369,7 @@ class Position:
             device_id,
             device_time,
             fix_time,
-            id,
+            bike_id,
             latitude,
             longitude,
             network,
@@ -381,14 +377,13 @@ class Position:
             protocol,
             server_time,
             speed,
-            type,
+            bike_type,
             valid,
         )
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["accuracy"] = to_float(self.accuracy)
+        result: dict = {"accuracy": to_float(self.accuracy)}
         result["address"] = from_none(self.address)
         result["altitude"] = to_float(self.altitude)
         result["attributes"] = to_class(PositionAttributes, self.attributes)
@@ -396,7 +391,7 @@ class Position:
         result["deviceId"] = from_int(self.device_id)
         result["deviceTime"] = self.device_time.isoformat()
         result["fixTime"] = self.fix_time.isoformat()
-        result["id"] = from_int(self.id)
+        result["bike_id"] = from_int(self.bike_id)
         result["latitude"] = to_float(self.latitude)
         result["longitude"] = to_float(self.longitude)
         result["network"] = from_none(self.network)
@@ -404,7 +399,7 @@ class Position:
         result["protocol"] = from_str(self.protocol)
         result["serverTime"] = self.server_time.isoformat()
         result["speed"] = to_float(self.speed)
-        result["type"] = from_none(self.type)
+        result["type"] = from_none(self.bike_type)
         result["valid"] = from_bool(self.valid)
         return result
 
@@ -441,8 +436,7 @@ class SessionAttributes:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["appEnvironment"] = from_str(self.app_environment)
+        result: dict = {"appEnvironment": from_str(self.app_environment)}
         result["appPackage"] = from_str(self.app_package)
         result["appVersion"] = from_str(self.app_version)
         result["fcmTokens"] = from_list(from_str, self.fcm_tokens)
@@ -463,12 +457,12 @@ class Session:
     disabled: bool
     email: str
     expiration_time: None
-    id: int
+    bike_id: int
     latitude: float
     limit_commands: bool
     login: None
     longitude: float
-    map: None
+    bike_map: None
     name: str
     password: None
     phone: None
@@ -491,12 +485,12 @@ class Session:
         disabled = from_bool(obj.get("disabled"))
         email = from_str(obj.get("email"))
         expiration_time = from_none(obj.get("expirationTime"))
-        id = from_int(obj.get("id"))
+        bike_id = from_int(obj.get("id"))
         latitude = from_float(obj.get("latitude"))
         limit_commands = from_bool(obj.get("limitCommands"))
         login = from_none(obj.get("login"))
         longitude = from_float(obj.get("longitude"))
-        map = from_none(obj.get("map"))
+        bike_map = from_none(obj.get("map"))
         name = from_str(obj.get("name"))
         password = from_none(obj.get("password"))
         phone = from_none(obj.get("phone"))
@@ -515,12 +509,12 @@ class Session:
             disabled,
             email,
             expiration_time,
-            id,
+            bike_id,
             latitude,
             limit_commands,
             login,
             longitude,
-            map,
+            bike_map,
             name,
             password,
             phone,
@@ -534,8 +528,7 @@ class Session:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["administrator"] = from_bool(self.administrator)
+        result: dict = {"administrator": from_bool(self.administrator)}
         result["attributes"] = to_class(SessionAttributes, self.attributes)
         result["coordinateFormat"] = from_none(self.coordinate_format)
         result["deviceLimit"] = from_int(self.device_limit)
@@ -543,12 +536,12 @@ class Session:
         result["disabled"] = from_bool(self.disabled)
         result["email"] = from_str(self.email)
         result["expirationTime"] = from_none(self.expiration_time)
-        result["id"] = from_int(self.id)
+        result["bike_id"] = from_int(self.bike_id)
         result["latitude"] = to_float(self.latitude)
         result["limitCommands"] = from_bool(self.limit_commands)
         result["login"] = from_none(self.login)
         result["longitude"] = to_float(self.longitude)
-        result["map"] = from_none(self.map)
+        result["map"] = from_none(self.bike_map)
         result["name"] = from_str(self.name)
         result["password"] = from_none(self.password)
         result["phone"] = from_none(self.phone)
@@ -567,7 +560,7 @@ class Subscription:
 
     category: str
     created_at: datetime
-    id: int
+    bike_id: int
     setup_fee: None
     subscription_id: None
     trial_duration: int
@@ -581,7 +574,7 @@ class Subscription:
         assert isinstance(obj, dict)
         category = from_str(obj.get("category"))
         created_at = from_datetime(obj.get("createdAt"))
-        id = from_int(obj.get("id"))
+        bike_id = from_int(obj.get("id"))
         setup_fee = from_none(obj.get("setupFee"))
         subscription_id = from_str(obj.get("subscriptionId", "Unknown"))
         trial_duration = from_int(obj.get("trialDuration"))
@@ -591,7 +584,7 @@ class Subscription:
         return Subscription(
             category,
             created_at,
-            id,
+            bike_id,
             setup_fee,
             subscription_id,
             trial_duration,
@@ -602,10 +595,9 @@ class Subscription:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["category"] = from_str(self.category)
+        result: dict = {"category": from_str(self.category)}
         result["createdAt"] = self.created_at.isoformat()
-        result["id"] = from_int(self.id)
+        result["bike_id"] = from_int(self.bike_id)
         result["setupFee"] = from_none(self.setup_fee)
         result["subscriptionId"] = from_none(self.subscription_id)
         result["trialDuration"] = from_int(self.trial_duration)
@@ -692,8 +684,7 @@ class Trip:
 
     def to_dict(self) -> dict:
         """Convert a class instance to a dictionary."""
-        result: dict = {}
-        result["averageSpeed"] = to_float(self.average_speed)
+        result: dict = {"averageSpeed": to_float(self.average_speed)}
         result["deviceId"] = from_int(self.device_id)
         result["deviceName"] = from_str(self.device_name)
         result["distance"] = to_float(self.distance)

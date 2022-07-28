@@ -12,13 +12,17 @@ from . import BikeTraxData
 from .const import DOMAIN
 
 CONF_ALTITUDE = "altitude"
-CONF_ID = "id"
+CONF_ID = "bike_id"
+CONF_PHONE = "phone"
+CONF_UNIQUE_ID = "uniqueId"
 
 TO_REDACT = {
     CONF_ALTITUDE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
     CONF_ID,
+    CONF_PHONE,
+    CONF_UNIQUE_ID,
 }
 
 
@@ -29,5 +33,5 @@ async def async_get_config_entry_diagnostics(
     data: BikeTraxData = hass.data[DOMAIN][entry.entry_id]
 
     return async_redact_data(
-        {"bikes": [bt.as_dict() for bt in data.bikes.values()]}, TO_REDACT
+        {"bikes": [bt._device.to_dict() for bt in data.bikes.values()]}, TO_REDACT
     )
