@@ -36,6 +36,7 @@ class Account:
 
         self._devices = {}
         self._positions = {}
+        self._trips = {}
         self._subscriptions = {}
 
         self._update_task = None
@@ -88,6 +89,9 @@ class Account:
 
                     if isinstance(update, models.Position):
                         self._positions[update.device_id] = update
+                        updates = True
+                    elif isinstance(update, models.Trip):
+                        self._trips[update.device_id] = update
                         updates = True
                     elif isinstance(update, models.Device):
                         self._devices[update.id] = update
@@ -153,15 +157,17 @@ class Device:
             self._id, self._device.position_id
         )
 
+    async def update_trip(self) -> None:
+        """Update the last trip information of the device."""
+        self._account._trips[self._id] = await self._account.traccar_api.get_trip(
+            device_id=self._id
+        )
+
     async def update_subscription(self) -> None:
         """Update the subscription information of the device."""
         self._account._subscriptions[
             self._id
         ] = await self._account.admin_api.get_subscription(self._device.unique_id)
-
-    async def update_trips(self) -> None:
-        """Update the trips information of the device."""
-        pass
 
     async def set_guarded(self, guarded: bool) -> None:
         """Set the guarded attribute of the device."""
@@ -202,6 +208,11 @@ class Device:
     def _position(self) -> Optional[models.Position]:
         """Get the position. Can be `None` if no position data is available yet."""
         return self._account._positions.get(self._id)
+
+    @property
+    def _trip(self) -> Optional[models.Trip]:
+        """Get the trip. Can be `None` if no trip data is available yet."""
+        return self._account._trips.get(self._id)
 
     @property
     def _subscription(self) -> Optional[models.Subscription]:

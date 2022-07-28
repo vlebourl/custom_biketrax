@@ -12,13 +12,13 @@ from . import BikeTraxData
 from .const import DOMAIN
 
 CONF_ALTITUDE = "altitude"
-CONF_UUID = "uuid"
+CONF_ID = "id"
 
 TO_REDACT = {
     CONF_ALTITUDE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
-    CONF_UUID,
+    CONF_ID,
 }
 
 

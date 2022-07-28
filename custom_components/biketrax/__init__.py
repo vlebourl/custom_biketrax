@@ -51,6 +51,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Update the BikeTrax."""
         try:
             await bt.update_position()
+            await bt.update_trip()
+            await bt.update_subscription()
         except Exception as err:
             raise UpdateFailed(f"Error while retrieving data: {err}") from err
 

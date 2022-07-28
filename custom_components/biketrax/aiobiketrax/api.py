@@ -213,6 +213,26 @@ class TraccarApi:
 
         return [models.trip_from_dict(trip) for trip in response]
 
+    async def get_trip(self, device_id: str) -> models.Trip | None:
+        """Get the last trip in the last week or None using a filter.
+
+        Args:
+            device_id: The filter for device identifier.
+
+        Returns:
+            The last trip in the last week or None.
+        """
+        response = await self._get(
+            "trips",
+            params={
+                "device_id": device_id,
+                "from": (datetime.now() - datetime.timedelta(days=7)).isoformat(),
+                "to": datetime.now().isoformat(),
+            },
+        )
+        trips = [models.trip_from_dict(trip) for trip in response]
+        return trips[-1] if trips else None
+
     async def _get(self, endpoint, params=None) -> Dict:
         while True:
             await self.identity_api.login()
