@@ -37,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     websession = aiohttp_client.async_get_clientsession(hass)
 
     try:
-        client = await Account(
+        client = Account(
             entry.data[CONF_USERNAME],
             entry.data[CONF_PASSWORD],
             session=websession,
@@ -51,10 +51,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Update the BikeTrax."""
         try:
             await bt.update_position()
+        except Exception as err:
+            raise UpdateFailed(f"Error while updating position: {err}") from err
+        try:
             await bt.update_trip()
+        except Exception as err:
+            raise UpdateFailed(f"Error while updating trip: {err}") from err
+        try:
             await bt.update_subscription()
         except Exception as err:
-            raise UpdateFailed(f"Error while retrieving data: {err}") from err
+            raise UpdateFailed(f"Error while updating subscription: {err}") from err
 
     coordinators = {}
     coordinator_init_tasks = []
@@ -75,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinators=coordinators, bikes=bikes
     )
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS[0])
 
     return True
 

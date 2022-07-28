@@ -583,7 +583,7 @@ class Subscription:
         created_at = from_datetime(obj.get("createdAt"))
         id = from_int(obj.get("id"))
         setup_fee = from_none(obj.get("setupFee"))
-        subscription_id = from_none(obj.get("subscriptionId"))
+        subscription_id = from_str(obj.get("subscriptionId", "Unknown"))
         trial_duration = from_int(obj.get("trialDuration"))
         trial_end = from_datetime(obj.get("trialEnd"))
         unique_id = from_str(obj.get("uniqueId"))

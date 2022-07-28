@@ -1,6 +1,7 @@
 """API file for biketrax component."""
 import logging
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from decimal import InvalidOperation
 from typing import Any, AsyncIterable, Dict, List, Optional, Union
 
@@ -203,11 +204,11 @@ class TraccarApi:
             A list of trips.
         """
         response = await self._get(
-            "trips",
+            "reports/trips",
             params={
                 "device_id": device_id,
-                "from": from_date.isoformat(),
-                "to": to_date.isoformat(),
+                "from": time.strftime("%Y-%m-%dT%H:%M:%SZ", from_date.timetuple()),
+                "to": time.strftime("%Y-%m-%dT%H:%M:%SZ", to_date.timetuple()),
             },
         )
 
@@ -222,12 +223,15 @@ class TraccarApi:
         Returns:
             The last trip in the last week or None.
         """
+        from_date = datetime.now() - timedelta(days=7)
+        to_date = datetime.now()
+
         response = await self._get(
-            "trips",
+            "reports/trips",
             params={
                 "device_id": device_id,
-                "from": (datetime.now() - datetime.timedelta(days=7)).isoformat(),
-                "to": datetime.now().isoformat(),
+                "from": time.strftime("%Y-%m-%dT%H:%M:%SZ", from_date.timetuple()),
+                "to": time.strftime("%Y-%m-%dT%H:%M:%SZ", to_date.timetuple()),
             },
         )
         trips = [models.trip_from_dict(trip) for trip in response]

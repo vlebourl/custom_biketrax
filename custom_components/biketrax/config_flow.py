@@ -46,7 +46,8 @@ class BTFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         session = aiohttp_client.async_get_clientsession(self.hass)
 
         try:
-            await Account(self._username, self._password, session=session)
+            client = Account(self._username, self._password, session=session)
+            await client.update_devices()
         except Exception as err:
             LOGGER.error("Unknown BikeTrax error: %s", err)
             errors["base"] = "unknown"

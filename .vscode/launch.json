@@ -8,7 +8,7 @@
       "name": "Hass",
       "type": "python",
       "request": "launch",
-      "program": "hass",
+      "program": "/home/vlb/.local/share/virtualenvs/custom_biketrax-2tr0QdTM/bin/hass",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": ["--config", "${workspaceFolder}/Config"]

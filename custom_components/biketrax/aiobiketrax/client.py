@@ -17,6 +17,7 @@ class Account:
 
     _devices: Dict[int, models.Device]
     _positions: Dict[int, models.Position]
+    _trips: Dict[int, models.Trip]
     _subscriptions: Dict[str, models.Subscription]
 
     def __init__(

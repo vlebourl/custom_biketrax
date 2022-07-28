@@ -20,7 +20,6 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_IS_DELETED = "is_deleted"
 ATTR_IS_ALARM_TRIGGERED = "is_alarm_triggered"
 ATTR_IS_TRACKING_ENABLED = "is_tracking_enabled"
 ATTR_IS_STOLEN = "is_stolen"
@@ -105,7 +104,6 @@ class BikeTraxDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Update the entity from the latest data."""
         self._attr_extra_state_attributes.update(
             {
-                ATTR_IS_DELETED: self._biketrax.is_deleted,
                 ATTR_IS_ALARM_TRIGGERED: self._biketrax.is_alarm_triggered,
                 ATTR_IS_TRACKING_ENABLED: self._biketrax.is_tracking_enabled,
                 ATTR_IS_STOLEN: self._biketrax.is_stolen,
