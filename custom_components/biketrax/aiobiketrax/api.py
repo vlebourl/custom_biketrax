@@ -208,7 +208,7 @@ class TraccarApi:
         response = await self._get(
             "reports/trips",
             params={
-                "device_id": device_id,
+                "deviceId": device_id,
                 "from": time.strftime("%Y-%m-%dT%H:%M:%SZ", from_date.timetuple()),
                 "to": time.strftime("%Y-%m-%dT%H:%M:%SZ", to_date.timetuple()),
             },
@@ -225,18 +225,9 @@ class TraccarApi:
         Returns:
             The last trip in the last week or None.
         """
-        from_date = datetime.now() - timedelta(days=7)
-        to_date = datetime.now()
-
-        response = await self._get(
-            "reports/trips",
-            params={
-                "device_id": device_id,
-                "from": time.strftime("%Y-%m-%dT%H:%M:%SZ", from_date.timetuple()),
-                "to": time.strftime("%Y-%m-%dT%H:%M:%SZ", to_date.timetuple()),
-            },
+        trips = await self.get_trips(
+            device_id, datetime.now() - timedelta(days=7), datetime.now()
         )
-        trips = [models.trip_from_dict(trip) for trip in response]
         return trips[-1] if trips else None
 
     async def _get(self, endpoint, params=None) -> Dict:
