@@ -3,7 +3,9 @@
   "name": "BikeTrax",
   "codeowners": ["@vlebourl"],
   "config_flow": true,
-  "requirements": [],
+  "requirements": [
+    "auth0-python==3.23.1"
+  ],
   "iot_class": "cloud_polling",
   "version": "0.1.0",
   "loggers": ["biketrax"],
