@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
-from functools import partial
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
@@ -11,25 +10,23 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.util.async_ import gather_with_concurrency
 
 from .aiobiketrax import Account
 from .aiobiketrax.client import Device as BikeTrax
 from .const import DOMAIN, LOGGER
+from .coordinator import BikeTraxDataUpdateCoordinator
 
 PLATFORMS = [Platform.DEVICE_TRACKER]
 
-DEFAULT_INIT_TASK_LIMIT = 2
-DEFAULT_UPDATE_INTERVAL = timedelta(minutes=2)
+DEFAULT_UPDATE_INTERVAL = timedelta(minutes=1)
 
 
 @dataclass
 class BikeTraxData:
     """Define an object to be stored in `hass.data`."""
 
-    coordinators: dict[str, DataUpdateCoordinator]
-    bikes: dict[str, BikeTrax]
+    coordinator: BikeTraxDataUpdateCoordinator
+    devices: dict[str, BikeTrax]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -43,57 +40,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.data[CONF_PASSWORD],
             session=websession,
         )
-        await client.update_devices()
-        bikes = {bike.bike_id: bike for bike in client.devices}
     except Exception as err:
         raise ConfigEntryAuthFailed("Failed to authenticate") from err
 
-    async def async_update_bt(bt: BikeTrax) -> None:
-        """Update the BikeTrax."""
-        try:
-            await bt.update_position()
-        except Exception as err:
-            raise UpdateFailed(f"Error while updating position: {err}") from err
-        try:
-            await bt.update_trip()
-        except Exception as err:
-            raise UpdateFailed(f"Error while updating trip: {err}") from err
-        try:
-            await bt.update_subscription()
-        except Exception as err:
-            raise UpdateFailed(f"Error while updating subscription: {err}") from err
+    coordinator = BikeTraxDataUpdateCoordinator(
+        hass,
+        LOGGER,
+        client=client,
+        name="biketrax coordinator",
+        update_interval=DEFAULT_UPDATE_INTERVAL,
+    )
+    await coordinator.async_config_entry_first_refresh()
+    devices = {device.bike_id: device for device in coordinator.data.values()}
 
-    coordinators = {}
-    coordinator_init_tasks = []
-
-    for bt_id, bt in bikes.items():
-        coordinator = coordinators[bt_id] = DataUpdateCoordinator(
-            hass,
-            LOGGER,
-            name=bt.name,
-            update_interval=DEFAULT_UPDATE_INTERVAL,
-            update_method=partial(async_update_bt, bt),
-        )
-        coordinator_init_tasks.append(coordinator.async_refresh())
-
-    await gather_with_concurrency(DEFAULT_INIT_TASK_LIMIT, *coordinator_init_tasks)
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = BikeTraxData(
-        coordinators=coordinators, bikes=bikes
+        coordinator=coordinator, devices=devices
     )
 
     await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS[0])
 
     device_registry = await dr.async_get_registry(hass)
-    for bike_id, bike in bikes.items():
-        LOGGER.debug("Add bike (%s)", bike_id)
+    for device_id, device in devices.items():
+        LOGGER.debug("Add device (%s)", device_id)
 
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
-            identifiers={(DOMAIN, bike_id)},
-            model=bike.model,
+            identifiers={(DOMAIN, device_id)},
+            model=device.model,
             manufacturer="PowUnity BikeTrax",
-            name=bike.name,
+            name=device.name,
         )
 
     return True
