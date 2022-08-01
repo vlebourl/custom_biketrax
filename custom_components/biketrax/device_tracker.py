@@ -45,12 +45,12 @@ async def async_setup_entry(
     """Set up Tile device trackers."""
     data: BikeTraxData = hass.data[DOMAIN][entry.entry_id]
 
-    _LOGGER.info("Found %d bikes", len(data.bikes))
+    _LOGGER.info("Found %d devices", len(data.devices))
 
     async_add_entities(
         [
-            BikeTraxDeviceTracker(entry, data.coordinators[bt_id], bt)
-            for bt_id, bt in data.bikes.items()
+            BikeTraxDeviceTracker(entry, data.coordinator, bt)
+            for bt_id, bt in data.devices.items()
         ]
     )
 
